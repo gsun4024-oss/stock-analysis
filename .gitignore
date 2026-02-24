@@ -4,8 +4,12 @@
 
 # Build outputs
 dist/
+dist-github/
 build/
 *.dist
+
+# Manus logs
+.manus-logs/
 
 # Environment variables
 .env
