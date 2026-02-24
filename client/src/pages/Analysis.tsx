@@ -58,6 +58,7 @@ export default function Analysis() {
   const [showTheories, setShowTheories] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchDebounced, setSearchDebounced] = useState("");
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null); // 用户从下拉选择的 symbol
 
   // 节流搜索输入
   useEffect(() => {
@@ -134,17 +135,37 @@ export default function Analysis() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      const sym = searchInput.trim().toUpperCase();
-      setSymbol(sym);
+    if (!searchInput.trim()) return;
+    // 如果用户从下拉选择了某个 symbol，优先使用
+    if (selectedSymbol) {
+      setSymbol(selectedSymbol);
       setShowSuggestions(false);
-      window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(sym)}`);
+      window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(selectedSymbol)}`);
+      setSelectedSymbol(null);
+      return;
     }
+    // 否则尝试在本地名称库中查找（处理直接输入中文名称后按回车的情况）
+    const q = searchInput.trim();
+    // 如果建议列表有结果，取第一个
+    if (suggestions && suggestions.length > 0) {
+      const first = suggestions[0];
+      setSymbol(first.symbol);
+      setSearchInput(first.displayName);
+      setShowSuggestions(false);
+      window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(first.symbol)}`);
+      return;
+    }
+    // 否则当作代码处理
+    const sym = q.toUpperCase();
+    setSymbol(sym);
+    setShowSuggestions(false);
+    window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(sym)}`);
   };
 
   const handleSelectSuggestion = (sym: string, name: string) => {
     setSymbol(sym);
     setSearchInput(name);
+    setSelectedSymbol(sym);
     setShowSuggestions(false);
     window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(sym)}`);
   };
@@ -180,7 +201,7 @@ export default function Analysis() {
                   boxShadow: "0 2px 12px rgba(155,127,212,0.08)",
                 }}
                 onFocus={(e) => { e.target.style.border = "1.5px solid rgba(232,114,138,0.45)"; setShowSuggestions(true); }}
-                onBlur={(e) => { e.target.style.border = "1.5px solid rgba(155,127,212,0.2)"; setTimeout(() => setShowSuggestions(false), 200); }}
+                onBlur={(e) => { e.target.style.border = "1.5px solid rgba(155,127,212,0.2)"; setTimeout(() => setShowSuggestions(false), 400); }}
               />
               {/* 搜索建议下拉 */}
               {showSuggestions && suggestions && suggestions.length > 0 && (
