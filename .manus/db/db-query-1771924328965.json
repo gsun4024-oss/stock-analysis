@@ -1,0 +1,16 @@
+{
+  "query": "UPDATE phone_users SET role = 'admin' WHERE nickname LIKE '%Gia%' OR nickname LIKE '%gia%'; SELECT id, phone, nickname, role FROM phone_users WHERE nickname LIKE '%Gia%' OR nickname LIKE '%gia%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 28Qhih1o5Vh6yFD.root --database RgRk5p5h9mVEUmHmz3CDbY --execute UPDATE phone_users SET role = 'admin' WHERE nickname LIKE '%Gia%' OR nickname LIKE '%gia%'; SELECT id, phone, nickname, role FROM phone_users WHERE nickname LIKE '%Gia%' OR nickname LIKE '%gia%';",
+  "rows": [
+    {
+      "id": "3",
+      "phone": "18375612133",
+      "nickname": "Gia",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tphone\tnickname\trole\n3\t18375612133\tGia\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 1757
+}
