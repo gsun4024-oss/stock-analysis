@@ -103,7 +103,7 @@ export default function Home() {
         <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(255,245,247,0.85) 0%, rgba(250,240,255,0.75) 50%, rgba(240,245,255,0.85) 100%)" }} />
 
         <div className="relative container mx-auto px-6 py-20">
-          <div className="max-w-3xl">
+          <div className="max-w-2xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -121,13 +121,13 @@ export default function Home() {
                 <span className="gradient-text">智慧投资</span>
               </h1>
 
-              <p className="text-lg mb-8 leading-relaxed max-w-xl" style={{ color: "#5A5A7A" }}>
+              <p className="text-lg mb-8 leading-relaxed" style={{ color: "#5A5A7A" }}>
                 结合道氏理论、波浪理论、价値投资等经典理论，
                 为您解读 A 股与美股的涨跌走势。
               </p>
 
               {/* 搜索框 */}
-              <form onSubmit={handleSearch} className="flex gap-3 max-w-lg">
+              <form onSubmit={handleSearch} className="flex gap-3 max-w-lg mx-auto">
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9B7FD4" }} />
                   <input
