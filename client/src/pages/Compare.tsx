@@ -381,7 +381,7 @@ export default function Compare() {
             </div>
             <h1 className="font-serif text-2xl font-bold text-gray-800">对比分析</h1>
           </div>
-          <p className="text-sm text-gray-400 ml-12">同屏对比两只股票的走势、指标与 AI 评分，发现投资机会</p>
+          <p className="text-sm text-gray-400 ml-12">同屏对比两只股票的走势、指标与综合评分，发现投资机会</p>
         </motion.div>
 
         {/* 选股区 */}
@@ -538,11 +538,11 @@ export default function Compare() {
                     )}
                   </div>
 
-                  {/* AI 综合评分 */}
+                  {/* 综合评分 */}
                   {score !== null && (
                     <div>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-400">AI 综合评分</span>
+                        <span className="text-gray-400">综合评分</span>
                         <span className="font-bold" style={{ color }}>{score}/100</span>
                       </div>
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -662,9 +662,9 @@ export default function Compare() {
                       })()}
                     </div>
 
-                    {/* AI 预测对比 */}
+                    {/* 预测对比 */}
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 mb-2">AI 预测</p>
+                      <p className="text-xs font-semibold text-gray-500 mb-2">预测对比</p>
                       <MetricCompare label="趋势判断" valueA={trendA.label} valueB={trendB.label} colorA={COLOR_A} colorB={COLOR_B} rawA={trendA.confidence} rawB={trendB.confidence} />
                       <MetricCompare label="趋势置信度" valueA={`${trendA.confidence}%`} valueB={`${trendB.confidence}%`} colorA={COLOR_A} colorB={COLOR_B} rawA={trendA.confidence} rawB={trendB.confidence} />
                       <MetricCompare label="7日目标价" valueA={`${dataA.meta.currency === "CNY" ? "¥" : "$"}${predA.priceTarget7d.toFixed(2)}`} valueB={`${dataB.meta.currency === "CNY" ? "¥" : "$"}${predB.priceTarget7d.toFixed(2)}`} colorA={COLOR_A} colorB={COLOR_B} rawA={predA.priceTarget7d / dataA.meta.regularMarketPrice} rawB={predB.priceTarget7d / dataB.meta.regularMarketPrice} />
@@ -693,7 +693,7 @@ export default function Compare() {
                             ? `当前技术面来看，${formatSymbol(symbolB)} 综合评分更高，短期表现相对占优。`
                             : "两只股票当前综合评分相近，建议结合基本面进一步分析。"}
                         </p>
-                        <p className="text-xs text-gray-400 mt-2 text-center">⚠️ 以上评分仅供参考，不构成投资建议</p>
+
                       </div>
                     )}
                   </motion.div>

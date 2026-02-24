@@ -294,9 +294,7 @@ export default function AStockPanel({ candles, meta }: AStockPanelProps) {
               </div>
             </div>
 
-            <p className="text-xs text-gray-400 bg-amber-50/60 rounded-lg p-2.5 border border-amber-100/50">
-              ⚠️ 北向资金数据为模拟演示，实际数据请参考交易所官方披露。
-            </p>
+
           </motion.div>
         )}
 
@@ -400,9 +398,7 @@ export default function AStockPanel({ candles, meta }: AStockPanelProps) {
               </div>
             </div>
 
-            <p className="text-xs text-gray-400 bg-amber-50/60 rounded-lg p-2.5 border border-amber-100/50">
-              ⚠️ 资金流向数据为基于成交量的模拟估算，仅供参考。
-            </p>
+
           </motion.div>
         )}
 
@@ -478,9 +474,7 @@ export default function AStockPanel({ candles, meta }: AStockPanelProps) {
                   ))}
                 </div>
 
-                <p className="text-xs text-gray-400 bg-amber-50/60 rounded-lg p-2.5 border border-amber-100/50">
-                  ⚠️ 龙虎榜数据为模拟演示，实际数据请参考交易所官方披露。
-                </p>
+
               </>
             )}
           </motion.div>

@@ -913,7 +913,7 @@ export default function Backtest() {
                         <span className="font-semibold" style={{ color: "#9B7FD4" }}>{selectedStrategy.theory}</span>
                         <span className="mx-1">·</span>
                         {selectedStrategy.description}
-                        <span className="ml-2 text-xs" style={{ color: "#C0C0D0" }}>⚠️ 回测结果仅供参考，不构成投资建议，历史表现不代表未来收益。</span>
+
                       </div>
                     </div>
                   </div>

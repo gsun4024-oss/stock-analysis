@@ -44,8 +44,8 @@ const FEATURES = [
   },
   {
     icon: <Sparkles className="w-6 h-6" />,
-    title: "AI 智能预测",
-    desc: "基于量化模型综合分析趋势、动能、波动率，给出短期价格预测与风险评估",
+    title: "智能预测",
+    desc: "综合分析趋势、动能、波动率，给出短期价格预测与风险评估",
     color: "#9B7FD4",
     bg: "rgba(155,127,212,0.08)",
   },
@@ -108,7 +108,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-medium"
                 style={{ background: "rgba(232,114,138,0.1)", color: "#C85A7A" }}>
                 <Sparkles className="w-4 h-4" />
-                融合 AI 技术 × 投资大师智慧
+                融合经典理论 × 投资大师智慧
               </div>
 
               <h1 className="text-5xl md:text-6xl font-bold mb-4 leading-tight" style={{ fontFamily: "'Noto Serif SC', serif" }}>
@@ -118,8 +118,8 @@ export default function Home() {
               </h1>
 
               <p className="text-lg mb-8 leading-relaxed max-w-xl" style={{ color: "#5A5A7A" }}>
-                结合道氏理论、波浪理论、价值投资等经典理论，
-                运用 AI 量化分析，为您解读 A 股与美股的涨跌走势。
+                结合道氏理论、波浪理论、价値投资等经典理论，
+                为您解读 A 股与美股的涨跌走势。
               </p>
 
               {/* 搜索框 */}
@@ -356,10 +356,10 @@ export default function Home() {
         <div className="container mx-auto px-6 text-center">
           <div className="gradient-divider mb-6" />
           <p className="text-sm" style={{ color: "#9B9BB8" }}>
-            股识 StockWise · 仅供学习参考，不构成投资建议
+            股识 StockWise
           </p>
           <p className="text-xs mt-1" style={{ color: "#BBBBCC" }}>
-            数据来源：Yahoo Finance · 技术分析不代表未来表现
+            数据来源：Yahoo Finance
           </p>
         </div>
       </footer>

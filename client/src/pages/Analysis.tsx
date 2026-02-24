@@ -320,10 +320,7 @@ export default function Analysis() {
                 <div className="glass-card p-5">
                   <h2 className="font-semibold mb-4 flex items-center gap-2" style={{ color: "#2D2D3A", fontFamily: "'Noto Serif SC', serif" }}>
                     <Zap className="w-4 h-4" style={{ color: "#9B7FD4" }} />
-                    AI 智能预测
-                    <span className="text-xs px-2 py-0.5 rounded-full ml-auto" style={{ background: "rgba(155,127,212,0.1)", color: "#9B7FD4" }}>
-                      仅供参考
-                    </span>
+                    智能预测
                   </h2>
 
                   {/* 明日预测 */}
@@ -401,9 +398,7 @@ export default function Analysis() {
                     </div>
                   </div>
 
-                  <p className="text-xs mt-3 text-center" style={{ color: "#BBBBCC" }}>
-                    ⚠ 预测结果仅供参考，不构成投资建议，投资有风险
-                  </p>
+
                 </div>
               )}
             </div>
