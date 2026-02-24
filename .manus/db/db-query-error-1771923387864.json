@@ -1,0 +1,8 @@
+{
+  "query": "\nINSERT INTO invite_codes (code, maxUses, usedCount, createdByAdminId, expiresAt, createdAt, updatedAt)\nVALUES ('STOCKWISE2026', 10, 0, 0, DATE_ADD(NOW(), INTERVAL 365 DAY), NOW(), NOW());\nSELECT code, maxUses, usedCount, expiresAt FROM invite_codes WHERE code = 'STOCKWISE2026';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 28Qhih1o5Vh6yFD.root --database RgRk5p5h9mVEUmHmz3CDbY --execute \nINSERT INTO invite_codes (code, maxUses, usedCount, createdByAdminId, expiresAt, createdAt, updatedAt)\nVALUES ('STOCKWISE2026', 10, 0, 0, DATE_ADD(NOW(), INTERVAL 365 DAY), NOW(), NOW());\nSELECT code, maxUses, usedCount, expiresAt FROM invite_codes WHERE code = 'STOCKWISE2026';\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'createdByAdminId' in 'field list'"
+  ]
+}

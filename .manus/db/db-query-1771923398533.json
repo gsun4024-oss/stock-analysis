@@ -1,0 +1,17 @@
+{
+  "query": "INSERT INTO invite_codes (code, note, maxUses, usedCount, isDisabled, createdBy, expiresAt, createdAt, updatedAt) VALUES ('STOCKWISE2026', '初始邀请码', 10, 0, 0, 0, DATE_ADD(NOW(), INTERVAL 365 DAY), NOW(), NOW()); SELECT code, note, maxUses, usedCount, expiresAt FROM invite_codes WHERE code = 'STOCKWISE2026';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 28Qhih1o5Vh6yFD.root --database RgRk5p5h9mVEUmHmz3CDbY --execute INSERT INTO invite_codes (code, note, maxUses, usedCount, isDisabled, createdBy, expiresAt, createdAt, updatedAt) VALUES ('STOCKWISE2026', '初始邀请码', 10, 0, 0, 0, DATE_ADD(NOW(), INTERVAL 365 DAY), NOW(), NOW()); SELECT code, note, maxUses, usedCount, expiresAt FROM invite_codes WHERE code = 'STOCKWISE2026';",
+  "rows": [
+    {
+      "code": "STOCKWISE2026",
+      "note": "初始邀请码",
+      "maxUses": "10",
+      "usedCount": "0",
+      "expiresAt": "2027-02-24 08:56:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tnote\tmaxUses\tusedCount\texpiresAt\nSTOCKWISE2026\t初始邀请码\t10\t0\t2027-02-24 08:56:38\n",
+  "stderr": "",
+  "execution_time_ms": 1738
+}

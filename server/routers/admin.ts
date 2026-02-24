@@ -6,6 +6,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { SignJWT, jwtVerify } from "jose";
+import { parse as parseCookieHeader } from "cookie";
 import { publicProcedure, router } from "../_core/trpc";
 import {
   getPhoneUserById,
@@ -24,7 +25,9 @@ const JWT_SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET || "stock
 
 /** 从请求中获取当前手机号用户（含 admin 验证） */
 async function requirePhoneAdmin(req: any) {
-  const token = req.cookies?.[PHONE_SESSION_COOKIE];
+  // Express 未启用 cookie-parser，需手动解析
+  const rawCookies = parseCookieHeader(req.headers?.cookie || "");
+  const token = rawCookies[PHONE_SESSION_COOKIE];
   if (!token) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
   try {

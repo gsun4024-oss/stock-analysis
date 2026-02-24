@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { SignJWT, jwtVerify } from "jose";
+import { parse as parseCookieHeader } from "cookie";
 import { publicProcedure, router } from "../_core/trpc";
 import { getSessionCookieOptions } from "../_core/cookies";
 import {
@@ -159,7 +160,9 @@ export const phoneAuthRouter = router({
 
   /** 获取当前登录的手机号用户信息 */
   me: publicProcedure.query(async ({ ctx }) => {
-    const token = ctx.req.cookies?.[PHONE_SESSION_COOKIE];
+    // Express 未启用 cookie-parser，需手动解析 req.headers.cookie
+    const rawCookies = parseCookieHeader(ctx.req.headers.cookie || "");
+    const token = rawCookies[PHONE_SESSION_COOKIE];
     if (!token) return null;
 
     const userId = await verifyPhoneToken(token);
