@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { phoneAuthRouter } from "./routers/phoneAuth";
 import { adminRouter } from "./routers/admin";
+import { stockRouter } from "./routers/stock";
 
 export const appRouter = router({
   system: systemRouter,
@@ -23,6 +24,9 @@ export const appRouter = router({
 
   /** 管理员接口（邀请码管理 + 用户管理） */
   admin: adminRouter,
+
+  /** 股票数据（服务端代理 Yahoo Finance） */
+  stock: stockRouter,
 });
 
 export type AppRouter = typeof appRouter;

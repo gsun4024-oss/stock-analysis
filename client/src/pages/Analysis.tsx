@@ -13,9 +13,10 @@ import {
   Clock, DollarSign, Activity
 } from "lucide-react";
 import {
-  fetchStockChart, formatPrice, formatChange, formatVolume,
+  formatPrice, formatChange, formatVolume,
   formatSymbol, isAStock, HOT_STOCKS, type StockChartData, type TimeRange
 } from "@/lib/stockApi";
+import { trpc } from "@/lib/trpc";
 import { analyzeTrend, generatePrediction } from "@/lib/indicators";
 import { getRelevantTheories } from "@/lib/theories";
 import CandlestickChart from "@/components/CandlestickChart";
@@ -52,7 +53,6 @@ export default function Analysis() {
   const [symbol, setSymbol] = useState("AAPL");
   const [timeRange, setTimeRange] = useState<TimeRange>("3mo");
   const [stockData, setStockData] = useState<StockChartData | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTheories, setShowTheories] = useState(false);
 
@@ -66,22 +66,51 @@ export default function Analysis() {
     }
   }, [location]);
 
-  const loadData = useCallback(async (sym: string, range: TimeRange) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchStockChart(sym, range);
-      setStockData(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "数据加载失败，请稍后重试");
-    } finally {
-      setLoading(false);
+  // 使用 tRPC 服务端代理获取真实 Yahoo Finance 数据
+  const { data: trpcStockData, isLoading: loading, error: trpcError, refetch } = trpc.stock.chart.useQuery(
+    { symbol, range: timeRange },
+    { retry: 1, staleTime: 60_000 }
+  );
+
+  // 将 tRPC 返回数据转换为 StockChartData 格式
+  useEffect(() => {
+    if (trpcStockData) {
+      setStockData({
+        meta: {
+          symbol: trpcStockData.meta.symbol,
+          longName: trpcStockData.meta.displayName || trpcStockData.meta.longName,
+          shortName: trpcStockData.meta.displayName || trpcStockData.meta.shortName,
+          currency: trpcStockData.meta.currency,
+          exchangeName: trpcStockData.meta.exchangeName,
+          regularMarketPrice: trpcStockData.meta.regularMarketPrice,
+          regularMarketChange: trpcStockData.meta.regularMarketChange,
+          regularMarketChangePercent: trpcStockData.meta.regularMarketChangePercent,
+          regularMarketDayHigh: trpcStockData.meta.regularMarketDayHigh,
+          regularMarketDayLow: trpcStockData.meta.regularMarketDayLow,
+          regularMarketVolume: trpcStockData.meta.regularMarketVolume,
+          regularMarketOpen: trpcStockData.meta.regularMarketOpen,
+          previousClose: trpcStockData.meta.previousClose,
+          fiftyTwoWeekHigh: trpcStockData.meta.fiftyTwoWeekHigh ?? 0,
+          fiftyTwoWeekLow: trpcStockData.meta.fiftyTwoWeekLow ?? 0,
+          marketCap: trpcStockData.meta.marketCap,
+          trailingPE: trpcStockData.meta.trailingPE,
+        },
+        candles: trpcStockData.candles,
+      });
+      setError(null);
     }
-  }, []);
+  }, [trpcStockData]);
 
   useEffect(() => {
-    loadData(symbol, timeRange);
-  }, [symbol, timeRange, loadData]);
+    if (trpcError) {
+      setError(trpcError.message || "数据加载失败，请稍后重试");
+    }
+  }, [trpcError]);
+
+  // loadData 保留用于刷新按钮兼容
+  const loadData = useCallback((_sym: string, _range: TimeRange) => {
+    refetch();
+  }, [refetch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

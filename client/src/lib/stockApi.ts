@@ -85,114 +85,48 @@ async function callForgeApi(apiName: string, params: Record<string, unknown>): P
 }
 
 /**
- * 获取股票 K 线图数据
+ * 获取股票 K 线图数据（通过服务端代理 Yahoo Finance，获取真实数据）
  */
 export async function fetchStockChart(
   symbol: string,
   range: TimeRange = "3mo"
 ): Promise<StockChartData> {
-  const interval = INTERVAL_MAP[range];
-  const region = isAStock(symbol) ? "CN" : "US";
-
-  let data: unknown;
   try {
-    data = await callForgeApi("YahooFinance/get_stock_chart", {
-      query: {
-        symbol,
-        region,
-        interval,
-        range,
-        includeAdjustedClose: true,
-        events: "div,split",
-      },
+    // 调用服务端 tRPC 代理接口
+    const input = encodeURIComponent(JSON.stringify({ "0": { json: { symbol, range } } }));
+    const res = await fetch(`/api/trpc/stock.chart?batch=1&input=${input}`, {
+      credentials: "include",
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const result = json[0]?.result?.data?.json;
+    if (!result?.meta) throw new Error("返回数据为空");
+    return {
+      meta: {
+        symbol: result.meta.symbol,
+        longName: result.meta.displayName || result.meta.longName,
+        shortName: result.meta.displayName || result.meta.shortName,
+        currency: result.meta.currency,
+        exchangeName: result.meta.exchangeName,
+        regularMarketPrice: result.meta.regularMarketPrice,
+        regularMarketChange: result.meta.regularMarketChange,
+        regularMarketChangePercent: result.meta.regularMarketChangePercent,
+        regularMarketDayHigh: result.meta.regularMarketDayHigh,
+        regularMarketDayLow: result.meta.regularMarketDayLow,
+        regularMarketVolume: result.meta.regularMarketVolume,
+        regularMarketOpen: result.meta.regularMarketOpen,
+        previousClose: result.meta.previousClose,
+        fiftyTwoWeekHigh: result.meta.fiftyTwoWeekHigh ?? 0,
+        fiftyTwoWeekLow: result.meta.fiftyTwoWeekLow ?? 0,
+        marketCap: result.meta.marketCap,
+        trailingPE: result.meta.trailingPE,
+      },
+      candles: result.candles,
+    };
   } catch {
-    // 如果 Forge API 不可用，使用模拟数据（用于演示）
+    // 服务端代理失败时回退模拟数据
     return generateMockData(symbol);
   }
-
-  const response = data as { chart?: { result?: Array<{
-    meta: {
-      symbol: string;
-      longName?: string;
-      shortName?: string;
-      currency: string;
-      exchangeName: string;
-      regularMarketPrice: number;
-      regularMarketDayHigh: number;
-      regularMarketDayLow: number;
-      regularMarketVolume: number;
-      regularMarketOpen?: number;
-      previousClose?: number;
-      chartPreviousClose?: number;
-      fiftyTwoWeekHigh: number;
-      fiftyTwoWeekLow: number;
-    };
-    timestamp?: number[];
-    indicators?: {
-      quote?: Array<{
-        open?: (number | null)[];
-        high?: (number | null)[];
-        low?: (number | null)[];
-        close?: (number | null)[];
-        volume?: (number | null)[];
-      }>;
-    };
-  }> } };
-
-  if (!response?.chart?.result?.[0]) {
-    return generateMockData(symbol);
-  }
-
-  const result = response.chart.result[0];
-  const meta = result.meta;
-  const timestamps: number[] = result.timestamp || [];
-  const quotes = result.indicators?.quote?.[0] || {};
-
-  const candles: CandleData[] = [];
-  for (let i = 0; i < timestamps.length; i++) {
-    const open = quotes.open?.[i];
-    const high = quotes.high?.[i];
-    const low = quotes.low?.[i];
-    const close = quotes.close?.[i];
-    const volume = quotes.volume?.[i];
-
-    if (open != null && high != null && low != null && close != null) {
-      candles.push({
-        time: timestamps[i],
-        open,
-        high,
-        low,
-        close,
-        volume: volume ?? 0,
-      });
-    }
-  }
-
-  const prevClose = meta.previousClose ?? meta.chartPreviousClose ?? meta.regularMarketPrice;
-  const change = meta.regularMarketPrice - prevClose;
-  const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
-
-  return {
-    meta: {
-      symbol: meta.symbol,
-      longName: meta.longName,
-      shortName: meta.shortName,
-      currency: meta.currency,
-      exchangeName: meta.exchangeName,
-      regularMarketPrice: meta.regularMarketPrice,
-      regularMarketChange: change,
-      regularMarketChangePercent: changePercent,
-      regularMarketDayHigh: meta.regularMarketDayHigh,
-      regularMarketDayLow: meta.regularMarketDayLow,
-      regularMarketVolume: meta.regularMarketVolume,
-      regularMarketOpen: meta.regularMarketOpen ?? prevClose,
-      previousClose: prevClose,
-      fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh,
-      fiftyTwoWeekLow: meta.fiftyTwoWeekLow,
-    },
-    candles,
-  };
 }
 
 /**
