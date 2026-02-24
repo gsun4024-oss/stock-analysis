@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: stock-analysis
+    runtime: node
+    plan: free
+    buildCommand: pnpm install && pnpm build && pnpm db:push
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: VITE_APP_ID
+        value: stockwise
+      - key: OAUTH_SERVER_URL
+        value: https://api.manus.im
+      - key: OWNER_OPEN_ID
+        value: stockwise-owner
+      - key: OWNER_NAME
+        value: StockWise Admin
+      - key: BUILT_IN_FORGE_API_URL
+        value: https://forge.manus.ai
+      - key: BUILT_IN_FORGE_API_KEY
+        sync: false
+      - key: VITE_FRONTEND_FORGE_API_KEY
+        sync: false
+      - key: VITE_FRONTEND_FORGE_API_URL
+        value: https://forge.manus.ai
