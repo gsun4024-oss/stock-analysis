@@ -53,11 +53,10 @@ export const adminRouter = router({
       return listInviteCodes(input.limit, input.offset);
     }),
 
-  /** 生成新邀请码 */
+  /** 生成新邀请码（每码仅限一次） */
   createInviteCode: publicProcedure
     .input(z.object({
       note: z.string().max(255).optional(),
-      maxUses: z.number().int().min(0).default(1),
       expiresAt: z.date().optional(),
       count: z.number().int().min(1).max(100).default(1), // 批量生成数量
     }))
@@ -71,7 +70,7 @@ export const adminRouter = router({
         await createInviteCode({
           code,
           note: input.note,
-          maxUses: input.maxUses,
+          maxUses: 1, // 强制每码仅限一次
           expiresAt: input.expiresAt,
           createdBy: admin.id,
           usedCount: 0,

@@ -1,0 +1,17 @@
+{
+  "query": "SELECT code, maxUses, usedCount, isDisabled, note FROM invite_codes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 28Qhih1o5Vh6yFD.root --database RgRk5p5h9mVEUmHmz3CDbY --execute SELECT code, maxUses, usedCount, isDisabled, note FROM invite_codes;",
+  "rows": [
+    {
+      "code": "STOCKWISE2026",
+      "maxUses": "1",
+      "usedCount": "2",
+      "isDisabled": "0",
+      "note": "初始邀请码"
+    }
+  ],
+  "messages": [],
+  "stdout": "code\tmaxUses\tusedCount\tisDisabled\tnote\nSTOCKWISE2026\t1\t2\t0\t初始邀请码\n",
+  "stderr": "",
+  "execution_time_ms": 1639
+}

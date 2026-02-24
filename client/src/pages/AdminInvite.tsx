@@ -21,7 +21,6 @@ export default function AdminInvite() {
   const [activeTab, setActiveTab] = useState<"codes" | "users">("codes");
   const [showGenForm, setShowGenForm] = useState(false);
   const [genNote, setGenNote] = useState("");
-  const [genMaxUses, setGenMaxUses] = useState(1);
   const [genCount, setGenCount] = useState(1);
   const [newCodes, setNewCodes] = useState<string[]>([]);
 
@@ -194,7 +193,7 @@ export default function AdminInvite() {
 
               {showGenForm && (
                 <div className="px-6 pb-6 border-t" style={{ borderColor: "rgba(232,114,138,0.1)" }}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                     <div>
                       <label className="text-xs font-medium mb-1.5 block" style={{ color: "#5A5A7A" }}>备注（选填）</label>
                       <input
@@ -202,17 +201,6 @@ export default function AdminInvite() {
                         value={genNote}
                         onChange={e => setGenNote(e.target.value)}
                         placeholder="如：给某某用"
-                        className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-                        style={{ background: "rgba(155,127,212,0.06)", border: "1.5px solid rgba(155,127,212,0.2)", color: "#2D2D3A" }}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium mb-1.5 block" style={{ color: "#5A5A7A" }}>最大使用次数（0=不限）</label>
-                      <input
-                        type="number"
-                        value={genMaxUses}
-                        onChange={e => setGenMaxUses(Math.max(0, parseInt(e.target.value) || 0))}
-                        min={0}
                         className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                         style={{ background: "rgba(155,127,212,0.06)", border: "1.5px solid rgba(155,127,212,0.2)", color: "#2D2D3A" }}
                       />
@@ -230,9 +218,10 @@ export default function AdminInvite() {
                       />
                     </div>
                   </div>
+                  <p className="text-xs mt-2" style={{ color: "#9B9BB8" }}>⚠️ 每个邀请码仅限使用一次，使用后自动失效</p>
 
                   <button
-                    onClick={() => createMutation.mutate({ note: genNote || undefined, maxUses: genMaxUses, count: genCount })}
+                    onClick={() => createMutation.mutate({ note: genNote || undefined, count: genCount })}
                     disabled={createMutation.isPending}
                     className="mt-4 flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium text-white transition-all"
                     style={{ background: "linear-gradient(135deg, #9B7FD4, #7B5FC4)", boxShadow: "0 4px 12px rgba(155,127,212,0.3)" }}
