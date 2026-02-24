@@ -93,13 +93,13 @@ export async function fetchStockChart(
 ): Promise<StockChartData> {
   try {
     // 调用服务端 tRPC 代理接口
-    const input = encodeURIComponent(JSON.stringify({ "0": { json: { symbol, range } } }));
-    const res = await fetch(`/api/trpc/stock.chart?batch=1&input=${input}`, {
+    const input = encodeURIComponent(JSON.stringify({ json: { symbol, range } }));
+    const res = await fetch(`/api/trpc/stock.chart?input=${input}`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    const result = json[0]?.result?.data?.json;
+    const result = json?.result?.data?.json;
     if (!result?.meta) throw new Error("返回数据为空");
     return {
       meta: {

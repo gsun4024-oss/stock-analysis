@@ -21,7 +21,6 @@ import { analyzeTrend, generatePrediction } from "@/lib/indicators";
 import { getRelevantTheories } from "@/lib/theories";
 import CandlestickChart from "@/components/CandlestickChart";
 import AStockPanel from "@/components/AStockPanel";
-import StockAIChat from "@/components/StockAIChat";
 import Navbar from "@/components/Navbar";
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
@@ -514,12 +513,6 @@ export default function Analysis() {
               </div>
             )}
 
-            {/* AI 智能分析师 */}
-            {trend && prediction && (
-              <div className="mb-5">
-                <StockAIChat stockData={stockData} trend={trend} prediction={prediction} />
-              </div>
-            )}
             {/* 相关理论 */}
             <div className="glass-card p-5">
               <button

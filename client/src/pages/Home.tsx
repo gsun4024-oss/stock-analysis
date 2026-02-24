@@ -5,7 +5,8 @@
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Search, TrendingUp, TrendingDown, BarChart2, BookOpen, Sparkles, ArrowRight, ChevronRight } from "lucide-react";
@@ -72,14 +73,42 @@ export default function Home() {
 
   const [, navigate] = useLocation();
   const [searchInput, setSearchInput] = useState("");
+  const [searchDebounced, setSearchDebounced] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [dailyQuote] = useState(() => DAILY_QUOTES[Math.floor(Math.random() * DAILY_QUOTES.length)]);
   const [activeTab, setActiveTab] = useState<"astock" | "usstock">("astock");
 
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchDebounced(searchInput), 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const { data: suggestions } = trpc.stock.search.useQuery(
+    { query: searchDebounced },
+    { enabled: searchDebounced.length >= 1 && showSuggestions, staleTime: 30_000 }
+  );
+
+  const handleSelectSuggestion = (sym: string, name: string) => {
+    setSelectedSymbol(sym);
+    setSearchInput(name);
+    setShowSuggestions(false);
+    navigate(`/analysis?symbol=${encodeURIComponent(sym)}`);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      navigate(`/analysis?symbol=${encodeURIComponent(searchInput.trim().toUpperCase())}`);
+    if (!searchInput.trim()) return;
+    if (selectedSymbol) {
+      navigate(`/analysis?symbol=${encodeURIComponent(selectedSymbol)}`);
+      setSelectedSymbol(null);
+      return;
     }
+    if (suggestions && suggestions.length > 0) {
+      navigate(`/analysis?symbol=${encodeURIComponent(suggestions[0].symbol)}`);
+      return;
+    }
+    navigate(`/analysis?symbol=${encodeURIComponent(searchInput.trim().toUpperCase())}`);
   };
 
   const handleStockClick = (symbol: string) => {
@@ -133,8 +162,8 @@ export default function Home() {
                   <input
                     type="text"
                     value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="输入股票代码，如 AAPL 或 600519.SS"
+                    onChange={(e) => { setSearchInput(e.target.value); setShowSuggestions(true); setSelectedSymbol(null); }}
+                    placeholder="搜索公司名称或代码，如「比亚迪」或 AAPL"
                     className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm outline-none transition-all"
                     style={{
                       background: "rgba(255,255,255,0.9)",
@@ -146,12 +175,39 @@ export default function Home() {
                     onFocus={(e) => {
                       e.target.style.border = "1.5px solid rgba(232,114,138,0.5)";
                       e.target.style.boxShadow = "0 4px 24px rgba(232,114,138,0.15)";
+                      setShowSuggestions(true);
                     }}
                     onBlur={(e) => {
                       e.target.style.border = "1.5px solid rgba(155,127,212,0.25)";
                       e.target.style.boxShadow = "0 4px 20px rgba(155,127,212,0.1)";
+                      setTimeout(() => setShowSuggestions(false), 400);
                     }}
                   />
+                  {showSuggestions && suggestions && suggestions.length > 0 && (
+                    <div
+                      className="absolute top-full left-0 right-0 mt-1 rounded-2xl overflow-hidden z-50 text-left"
+                      style={{
+                        background: "rgba(255,255,255,0.98)",
+                        boxShadow: "0 8px 32px rgba(155,127,212,0.2)",
+                        border: "1px solid rgba(155,127,212,0.15)",
+                      }}
+                    >
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.symbol}
+                          type="button"
+                          onMouseDown={() => handleSelectSuggestion(s.symbol, s.displayName)}
+                          className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-purple-50 transition-colors"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium" style={{ color: "#2D2D3A" }}>{s.displayName}</span>
+                            <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(155,127,212,0.1)", color: "#9B7FD4" }}>{s.symbol}</span>
+                          </div>
+                          <span className="text-xs" style={{ color: "#BBBBCC" }}>{s.exchange}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button type="submit" className="btn-primary px-6 py-3.5 rounded-2xl font-medium text-sm whitespace-nowrap">
                   开始分析

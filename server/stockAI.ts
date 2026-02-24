@@ -1,6 +1,6 @@
 /**
  * 股识 StockWise — 股票 AI 智能分析接口
- * 接收股票数据和用户问题，流式返回 AI 分析报告
+ * 优先使用 DeepSeek API，回退到 OpenRouter，最后回退到 Forge API（本地开发）
  */
 import { streamText } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
@@ -8,20 +8,7 @@ import type { Express } from "express";
 import { ENV } from "./_core/env";
 import { createPatchedFetch } from "./_core/patchedFetch";
 
-function createLLMProvider() {
-  const baseURL = ENV.forgeApiUrl.endsWith("/v1")
-    ? ENV.forgeApiUrl
-    : `${ENV.forgeApiUrl}/v1`;
-  return createOpenAI({
-    baseURL,
-    apiKey: ENV.forgeApiKey,
-    fetch: createPatchedFetch(fetch),
-  });
-}
-
 export function registerStockAIRoutes(app: Express) {
-  const openai = createLLMProvider();
-
   app.post("/api/stock-ai", async (req, res) => {
     try {
       const { symbol, stockName, question, stockContext } = req.body as {
@@ -99,14 +86,47 @@ ${stockContext.marketCap ? `- 市值：${currencySymbol}${(stockContext.marketCa
 请根据以上数据，用中文回答用户的问题。分析要有深度，结合具体数据，给出明确的操作建议（但要注明风险）。
 回答格式：使用 Markdown，适当使用标题、加粗、列表，让内容清晰易读。控制在300-500字以内。`;
 
-      const result = streamText({
-        model: openai.chat("gemini-2.5-flash"),
-        system: systemPrompt,
-        messages: [{ role: "user", content: question }],
-        maxOutputTokens: 1024,
-      });
+      const messages = [{ role: "user" as const, content: question }];
 
-      result.pipeTextStreamToResponse(res);
+      // 优先使用 DeepSeek API（国内可访问，稳定可靠）
+      if (ENV.deepseekApiKey) {
+        console.log("[stock-ai] Using DeepSeek API");
+        const provider = createOpenAI({
+          baseURL: "https://api.deepseek.com/v1",
+          apiKey: ENV.deepseekApiKey,
+        });
+        const result = streamText({
+          model: provider.chat("deepseek-chat"),
+          system: systemPrompt,
+          messages,
+          maxOutputTokens: 1024,
+        });
+        result.pipeTextStreamToResponse(res);
+        return;
+      }
+
+      // 回退：使用 Forge API（本地开发环境）
+      if (ENV.forgeApiKey) {
+        console.log("[stock-ai] Using Forge API (local dev)");
+        const baseURL = ENV.forgeApiUrl.endsWith("/v1")
+          ? ENV.forgeApiUrl
+          : `${ENV.forgeApiUrl}/v1`;
+        const provider = createOpenAI({
+          baseURL,
+          apiKey: ENV.forgeApiKey,
+          fetch: createPatchedFetch(fetch),
+        });
+        const result = streamText({
+          model: provider.chat("gemini-2.5-flash"),
+          system: systemPrompt,
+          messages,
+          maxOutputTokens: 1024,
+        });
+        result.pipeTextStreamToResponse(res);
+        return;
+      }
+
+      res.status(503).json({ error: "AI 服务未配置，请联系管理员" });
     } catch (error) {
       console.error("[/api/stock-ai] Error:", error);
       if (!res.headersSent) {
