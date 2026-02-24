@@ -1005,32 +1005,62 @@ export const stockRouter = router({
       };
     }),
 
-  /**
-   * 搜索股票（服务端代理）
+    /**
+   * 搜索股票（支持中文名称搜索 + 代码搜索）
    */
   search: publicProcedure
     .input(z.object({ query: z.string().min(1).max(50) }))
     .query(async ({ input }) => {
-      const data = await yahooFetch(
-        `/v1/finance/search?q=${encodeURIComponent(input.query)}&lang=zh-CN&region=CN&quotesCount=10&newsCount=0`
-      ) as any;
+      const q = input.query.trim();
 
-      const quotes = (data?.quotes || []) as Array<{
-        symbol: string;
-        longname?: string;
-        shortname?: string;
-        exchDisp?: string;
-        typeDisp?: string;
-      }>;
+      // 1. 先在本地 A 股名称库中搜索（支持中文名称模糊匹配）
+      const localResults: Array<{ symbol: string; displayName: string; exchange: string; type: string }> = [];
+      const queryLower = q.toLowerCase();
+      for (const [symbol, name] of Object.entries(A_STOCK_NAMES)) {
+        if (
+          name.includes(q) ||
+          symbol.toLowerCase().includes(queryLower)
+        ) {
+          const exchange = symbol.endsWith(".SS") ? "上交所" : "深交所";
+          localResults.push({ symbol, displayName: name, exchange, type: "股票" });
+          if (localResults.length >= 8) break;
+        }
+      }
 
-      return quotes.map(q => ({
-        symbol: q.symbol,
-        displayName: getStockDisplayName(q.symbol, q.longname, q.shortname),
-        longName: q.longname,
-        shortName: q.shortname,
-        exchange: q.exchDisp,
-        type: q.typeDisp,
-      }));
+      // 2. 同时调用 Yahoo Finance 搜索（处理网络失败不影响本地结果）
+      let remoteResults: Array<{ symbol: string; displayName: string; exchange?: string; type?: string }> = [];
+      try {
+        const data = await yahooFetch(
+          `/v1/finance/search?q=${encodeURIComponent(q)}&lang=zh-CN&region=CN&quotesCount=8&newsCount=0`
+        ) as any;
+        const quotes = (data?.quotes || []) as Array<{
+          symbol: string;
+          longname?: string;
+          shortname?: string;
+          exchDisp?: string;
+          typeDisp?: string;
+        }>;
+        remoteResults = quotes
+          .filter(item => item.symbol && (item.typeDisp === "Equity" || item.typeDisp === "股票"))
+          .map(item => ({
+            symbol: item.symbol,
+            displayName: getStockDisplayName(item.symbol, item.longname, item.shortname),
+            exchange: item.exchDisp,
+            type: item.typeDisp,
+          }));
+      } catch {
+        // Yahoo 搜索失败不影响本地结果
+      }
+
+      // 3. 合并结果，本地结果优先，去重
+      const seen = new Set<string>();
+      const merged = [...localResults, ...remoteResults].filter(item => {
+        if (seen.has(item.symbol)) return false;
+        seen.add(item.symbol);
+        return true;
+      });
+
+      return merged.slice(0, 10);
     }),
 
   /**

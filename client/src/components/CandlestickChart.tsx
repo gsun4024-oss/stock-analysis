@@ -12,6 +12,7 @@ import {
   LineSeries,
   CandlestickSeries,
   HistogramSeries,
+  createSeriesMarkers,
 } from "lightweight-charts";
 import type { CandleData } from "@/lib/stockApi";
 import {
@@ -21,12 +22,14 @@ import {
   calcRSI,
   calcBollinger,
   calcKDJ,
+  calcSignalPoints,
 } from "@/lib/indicators";
 
 interface CandlestickChartProps {
   candles: CandleData[];
   currency?: string;
   height?: number;
+  showSignals?: boolean;
 }
 
 type IndicatorType = "MA" | "EMA" | "BOLL" | "MACD" | "RSI" | "KDJ";
@@ -35,11 +38,13 @@ export default function CandlestickChart({
   candles,
   currency = "CNY",
   height = 420,
+  showSignals = true,
 }: CandlestickChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const subChartContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndicator, setActiveIndicator] = useState<IndicatorType>("MA");
   const [showVolume, setShowVolume] = useState(true);
+  const [showSignalMarkers, setShowSignalMarkers] = useState(showSignals);
 
   useEffect(() => {
     if (!chartContainerRef.current || candles.length === 0) return;
@@ -104,6 +109,24 @@ export default function CandlestickChart({
       close: c.close,
     }));
     candleSeries.setData(chartData);
+
+    // 买卖信号标注
+    if (showSignalMarkers && candles.length >= 30) {
+      const signals = calcSignalPoints(candles);
+      if (signals.length > 0) {
+        createSeriesMarkers(
+          candleSeries,
+          signals.map((s) => ({
+            time: s.time as TimeType,
+            position: s.type === "buy" ? "belowBar" : "aboveBar",
+            color: s.type === "buy" ? "#E8728A" : "#52C4A0",
+            shape: s.type === "buy" ? "arrowUp" : "arrowDown",
+            text: s.type === "buy" ? `买 ${s.reason}` : `卖 ${s.reason}`,
+            size: 1,
+          }))
+        );
+      }
+    }
 
     // 成交量
     if (showVolume) {
@@ -265,7 +288,7 @@ export default function CandlestickChart({
         try { subChart.remove(); } catch (_) {}
       }
     };
-  }, [candles, activeIndicator, showVolume, height]);
+  }, [candles, activeIndicator, showVolume, height, showSignalMarkers]);
 
   const indicators: { key: IndicatorType; label: string; color: string }[] = [
     { key: "MA", label: "MA均线", color: "#E8728A" },
@@ -296,6 +319,15 @@ export default function CandlestickChart({
             {ind.label}
           </button>
         ))}
+        <button
+          onClick={() => setShowSignalMarkers(!showSignalMarkers)}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+            showSignalMarkers ? "text-white shadow-sm" : "bg-white/60 text-gray-400"
+          }`}
+          style={showSignalMarkers ? { background: "linear-gradient(135deg, #E8728A, #52C4A0)" } : {}}
+        >
+          买卖信号
+        </button>
         <button
           onClick={() => setShowVolume(!showVolume)}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ml-auto ${

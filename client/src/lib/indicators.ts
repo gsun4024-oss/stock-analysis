@@ -363,3 +363,95 @@ function calcVolatility(candles: CandleData[], period: number): number {
   const variance = returns.reduce((a, b) => a + (b - mean) ** 2, 0) / returns.length;
   return Math.sqrt(variance);
 }
+
+/**
+ * 买卖信号点
+ */
+export interface SignalPoint {
+  time: number;
+  price: number;
+  type: "buy" | "sell";
+  reason: string;
+}
+
+/**
+ * 计算买入/卖出信号点（基于 MACD 金叉死叉 + RSI 超买超卖）
+ */
+export function calcSignalPoints(candles: CandleData[]): SignalPoint[] {
+  if (candles.length < 30) return [];
+  const signals: SignalPoint[] = [];
+  const rsi = calcRSI(candles, 14);
+  const macd = calcMACD(candles);
+  const boll = calcBollinger(candles, 20);
+
+  // 建立时间索引映射
+  const rsiMap = new Map(rsi.map((d) => [d.time, d.value]));
+  const bollMap = new Map(boll.map((d) => [d.time, d]));
+  const candleMap = new Map(candles.map((c) => [c.time, c]));
+
+  for (let i = 1; i < macd.length; i++) {
+    const prev = macd[i - 1];
+    const curr = macd[i];
+    const candle = candleMap.get(curr.time);
+    if (!candle) continue;
+
+    const rsiVal = rsiMap.get(curr.time) ?? 50;
+    const bollData = bollMap.get(curr.time);
+
+    // MACD 金叉（买入信号）
+    if (prev.histogram < 0 && curr.histogram > 0) {
+      const reasons: string[] = ["MACD金叉"];
+      if (rsiVal < 50) reasons.push(`RSI${rsiVal.toFixed(0)}`);
+      if (bollData && candle.close < bollData.middle) reasons.push("布林下轨");
+      signals.push({
+        time: curr.time,
+        price: candle.low * 0.998,
+        type: "buy",
+        reason: reasons.join("·"),
+      });
+    }
+
+    // MACD 死叉（卖出信号）
+    if (prev.histogram > 0 && curr.histogram < 0) {
+      const reasons: string[] = ["MACD死叉"];
+      if (rsiVal > 50) reasons.push(`RSI${rsiVal.toFixed(0)}`);
+      if (bollData && candle.close > bollData.middle) reasons.push("布林上轨");
+      signals.push({
+        time: curr.time,
+        price: candle.high * 1.002,
+        type: "sell",
+        reason: reasons.join("·"),
+      });
+    }
+  }
+
+  // RSI 超卖买入（RSI < 30）
+  for (let i = 1; i < rsi.length; i++) {
+    if (rsi[i - 1].value >= 30 && rsi[i].value < 30) {
+      const candle = candleMap.get(rsi[i].time);
+      if (candle && !signals.find((s) => s.time === rsi[i].time)) {
+        signals.push({
+          time: rsi[i].time,
+          price: candle.low * 0.998,
+          type: "buy",
+          reason: `RSI超卖(${rsi[i].value.toFixed(0)})`,
+        });
+      }
+    }
+    // RSI 超买卖出（RSI > 70）
+    if (rsi[i - 1].value <= 70 && rsi[i].value > 70) {
+      const candle = candleMap.get(rsi[i].time);
+      if (candle && !signals.find((s) => s.time === rsi[i].time)) {
+        signals.push({
+          time: rsi[i].time,
+          price: candle.high * 1.002,
+          type: "sell",
+          reason: `RSI超买(${rsi[i].value.toFixed(0)})`,
+        });
+      }
+    }
+  }
+
+  // 按时间排序
+  return signals.sort((a, b) => a.time - b.time);
+}

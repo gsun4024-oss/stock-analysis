@@ -21,6 +21,7 @@ import { analyzeTrend, generatePrediction } from "@/lib/indicators";
 import { getRelevantTheories } from "@/lib/theories";
 import CandlestickChart from "@/components/CandlestickChart";
 import AStockPanel from "@/components/AStockPanel";
+import StockAIChat from "@/components/StockAIChat";
 import Navbar from "@/components/Navbar";
 
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
@@ -55,6 +56,16 @@ export default function Analysis() {
   const [stockData, setStockData] = useState<StockChartData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showTheories, setShowTheories] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchDebounced, setSearchDebounced] = useState("");
+
+  // 节流搜索输入
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchDebounced(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   // 从 URL 参数获取 symbol
   useEffect(() => {
@@ -112,13 +123,30 @@ export default function Analysis() {
     refetch();
   }, [refetch]);
 
+  // 搜索建议（中文名称 + 代码）
+  const { data: suggestions } = trpc.stock.search.useQuery(
+    { query: searchDebounced },
+    {
+      enabled: searchDebounced.length >= 1 && showSuggestions,
+      staleTime: 30_000,
+    }
+  );
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {
       const sym = searchInput.trim().toUpperCase();
       setSymbol(sym);
+      setShowSuggestions(false);
       window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(sym)}`);
     }
+  };
+
+  const handleSelectSuggestion = (sym: string, name: string) => {
+    setSymbol(sym);
+    setSearchInput(name);
+    setShowSuggestions(false);
+    window.history.pushState({}, "", `/analysis?symbol=${encodeURIComponent(sym)}`);
   };
 
   const trend = stockData ? analyzeTrend(stockData.candles) : null;
@@ -141,8 +169,8 @@ export default function Analysis() {
               <input
                 type="text"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="输入股票代码，如 AAPL 或 600519.SS"
+                onChange={(e) => { setSearchInput(e.target.value); setShowSuggestions(true); }}
+                placeholder="搜索公司名称或股票代码，如「比亚迪」或 AAPL"
                 className="w-full pl-11 pr-4 py-3 rounded-2xl text-sm outline-none transition-all"
                 style={{
                   background: "rgba(255,255,255,0.9)",
@@ -151,9 +179,35 @@ export default function Analysis() {
                   fontFamily: "'DM Sans', sans-serif",
                   boxShadow: "0 2px 12px rgba(155,127,212,0.08)",
                 }}
-                onFocus={(e) => { e.target.style.border = "1.5px solid rgba(232,114,138,0.45)"; }}
-                onBlur={(e) => { e.target.style.border = "1.5px solid rgba(155,127,212,0.2)"; }}
+                onFocus={(e) => { e.target.style.border = "1.5px solid rgba(232,114,138,0.45)"; setShowSuggestions(true); }}
+                onBlur={(e) => { e.target.style.border = "1.5px solid rgba(155,127,212,0.2)"; setTimeout(() => setShowSuggestions(false), 200); }}
               />
+              {/* 搜索建议下拉 */}
+              {showSuggestions && suggestions && suggestions.length > 0 && (
+                <div
+                  className="absolute top-full left-0 right-0 mt-1 rounded-2xl overflow-hidden z-50"
+                  style={{
+                    background: "rgba(255,255,255,0.98)",
+                    boxShadow: "0 8px 32px rgba(155,127,212,0.2)",
+                    border: "1px solid rgba(155,127,212,0.15)",
+                  }}
+                >
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.symbol}
+                      type="button"
+                      onMouseDown={() => handleSelectSuggestion(s.symbol, s.displayName)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-purple-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium" style={{ color: "#2D2D3A" }}>{s.displayName}</span>
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(155,127,212,0.1)", color: "#9B7FD4" }}>{s.symbol}</span>
+                      </div>
+                      <span className="text-xs" style={{ color: "#BBBBCC" }}>{s.exchange}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button type="submit" className="btn-primary px-5 py-3 rounded-2xl text-sm font-medium">
               分析
@@ -439,6 +493,12 @@ export default function Analysis() {
               </div>
             )}
 
+            {/* AI 智能分析师 */}
+            {trend && prediction && (
+              <div className="mb-5">
+                <StockAIChat stockData={stockData} trend={trend} prediction={prediction} />
+              </div>
+            )}
             {/* 相关理论 */}
             <div className="glass-card p-5">
               <button
